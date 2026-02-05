@@ -1,205 +1,152 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tag Game – Timer & Rounds</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #111;
-      color: white;
-      text-align: center;
-    }
-    canvas {
-      background: #222;
-      display: none;
-      margin: auto;
-      border: 2px solid white;
-    }
-    .menu, .hud {
-      margin-top: 20px;
-    }
-    button, select {
-      padding: 10px;
-      font-size: 16px;
-      margin: 5px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>BlockTag 2D</title>
+<style>
+body{margin:0;font-family:Arial;text-align:center;background:#111;color:white;}
+canvas{display:block;margin:auto;background:#222;border:2px solid white;display:none;}
+#menu{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#menu h1{font-size:60px;margin-bottom:20px;}
+#menu button, #menu select{padding:10px;font-size:16px;margin:5px;}
+#hud{margin-top:20px;display:none;}
+</style>
 </head>
 <body>
 
-<h1>🏃 TAG GAME</h1>
-
-<div class="menu" id="menu">
+<div id="menu">
+  <h1>🏃 BlockTag 2D</h1>
   <p>Mode</p>
   <select id="mode">
     <option value="2p">2 Player</option>
     <option value="bot">Vs Bot</option>
   </select>
-
   <p>Bot Difficulty</p>
   <select id="difficulty">
     <option value="1">Easy</option>
     <option value="2">Medium</option>
     <option value="3">Hard</option>
   </select>
-
   <p>Map</p>
   <select id="map">
     <option value="open">Open</option>
     <option value="maze">Maze</option>
   </select>
-
-  <br><br>
+  <br>
   <button onclick="startGame()">Start Game</button>
 </div>
 
-<div class="hud" id="hud" style="display:none">
-  ⏱ Time: <span id="time">20</span>
-  | 🔵 P1: <span id="s1">0</span>
-  | 🔴 P2/Bot: <span id="s2">0</span>
-  | Round <span id="round">1</span>/5
+<div id="hud">
+  ⏱ Time: <span id="time">20</span> | 🔵 P1: <span id="s1">0</span> | 🔴 P2/Bot: <span id="s2">0</span> | Round <span id="round">1</span>/5
 </div>
 
 <canvas id="game" width="600" height="400"></canvas>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+let keys={};
+let mode,difficulty,map;
+let walls=[];
 
-let keys = {};
-let mode, difficulty, map;
-let walls = [];
+let p1={x:50,y:50,c:"cyan"};
+let p2={x:500,y:300,c:"red"};
 
-let p1 = { x: 50, y: 50, c: "cyan" };
-let p2 = { x: 520, y: 320, c: "red" };
-
-let time = 20;
-let round = 1;
-let score1 = 0;
-let score2 = 0;
+let time=20, round=1, score1=0, score2=0;
 let timer;
+const speed=3;
 
-const speed = 3;
-
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+document.addEventListener("keydown",e=>keys[e.key]=true);
+document.addEventListener("keyup",e=>keys[e.key]=false);
 
 function startGame(){
-  mode = document.getElementById("mode").value;
-  difficulty = Number(document.getElementById("difficulty").value);
-  map = document.getElementById("map").value;
+  mode=document.getElementById("mode").value;
+  difficulty=Number(document.getElementById("difficulty").value);
+  map=document.getElementById("map").value;
 
-  walls = [];
-  if (map === "maze"){
-    walls = [
-      {x:150,y:0,w:20,h:300},
-      {x:300,y:100,w:20,h:300},
-      {x:450,y:0,w:20,h:300}
-    ];
+  walls=[];
+  if(map==="maze"){
+    walls=[{x:150,y:0,w:20,h:300},{x:300,y:100,w:20,h:300},{x:450,y:0,w:20,h:300}];
   }
 
-  score1 = score2 = 0;
-  round = 1;
+  score1=0;score2=0;round=1;
 
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("hud").style.display = "block";
-  canvas.style.display = "block";
+  document.getElementById("menu").style.display="none";
+  document.getElementById("hud").style.display="block";
+  canvas.style.display="block";
 
   startRound();
 }
 
 function startRound(){
-  p1.x = 50; p1.y = 50;
-  p2.x = 520; p2.y = 320;
-  time = 20;
-
+  p1.x=50;p1.y=50;p2.x=500;p2.y=300;time=20;
   updateHUD();
   clearInterval(timer);
-
-  timer = setInterval(() => {
+  timer=setInterval(()=>{
     time--;
     updateHUD();
-    if (time === 0){
+    if(time===0){
       score1++; // runner wins
       nextRound();
     }
-  }, 1000);
+  },1000);
 }
 
 function updateHUD(){
-  document.getElementById("time").innerText = time;
-  document.getElementById("s1").innerText = score1;
-  document.getElementById("s2").innerText = score2;
-  document.getElementById("round").innerText = round;
+  document.getElementById("time").innerText=time;
+  document.getElementById("s1").innerText=score1;
+  document.getElementById("s2").innerText=score2;
+  document.getElementById("round").innerText=round;
 }
 
-function movePlayer(p, dx, dy){
-  p.x += dx;
-  p.y += dy;
-  p.x = Math.max(0, Math.min(580, p.x));
-  p.y = Math.max(0, Math.min(380, p.y));
-
-  for (let w of walls){
-    if (p.x < w.x+w.w && p.x+20 > w.x &&
-        p.y < w.y+w.h && p.y+20 > w.y){
-      p.x -= dx;
-      p.y -= dy;
-    }
+function movePlayer(p,dx,dy){
+  p.x+=dx;p.y+=dy;
+  p.x=Math.max(0,Math.min(580,p.x));
+  p.y=Math.max(0,Math.min(380,p.y));
+  for(let w of walls){
+    if(p.x<w.x+w.w && p.x+20>w.x && p.y<w.y+w.h && p.y+20>w.y){p.x-=dx;p.y-=dy;}
   }
 }
 
 function botMove(){
-  let dx = p1.x - p2.x;
-  let dy = p1.y - p2.y;
-  let d = Math.hypot(dx, dy);
-  if (d > 0){
-    movePlayer(p2, (dx/d)*difficulty, (dy/d)*difficulty);
-  }
+  let dx=p1.x-p2.x, dy=p1.y-p2.y, d=Math.hypot(dx,dy);
+  if(d>0) movePlayer(p2,(dx/d)*difficulty,(dy/d)*difficulty);
 }
 
 function checkTag(){
-  if (Math.abs(p1.x - p2.x) < 20 && Math.abs(p1.y - p2.y) < 20){
+  if(Math.abs(p1.x-p2.x)<20 && Math.abs(p1.y-p2.y)<20){
     score2++;
     nextRound();
   }
 }
 
 function nextRound(){
-  clearInterval(timer);
-  round++;
-  if (score1 === 3 || score2 === 3 || round > 5){
-    alert((score1 > score2 ? "Player 1" : "Player 2/Bot") + " WINS THE GAME!");
+  clearInterval(timer); round++;
+  if(score1===3||score2===3||round>5){
+    alert((score1>score2?"Player 1":"Player 2/Bot")+" WINS THE GAME!");
     location.reload();
-  } else {
-    startRound();
-  }
+  } else startRound();
 }
 
 function loop(){
   ctx.clearRect(0,0,600,400);
 
-  if (keys["w"]) movePlayer(p1,0,-speed);
-  if (keys["s"]) movePlayer(p1,0,speed);
-  if (keys["a"]) movePlayer(p1,-speed,0);
-  if (keys["d"]) movePlayer(p1,speed,0);
+  if(keys["w"]) movePlayer(p1,0,-speed);
+  if(keys["s"]) movePlayer(p1,0,speed);
+  if(keys["a"]) movePlayer(p1,-speed,0);
+  if(keys["d"]) movePlayer(p1,speed,0);
 
-  if (mode === "2p"){
-    if (keys["ArrowUp"]) movePlayer(p2,0,-speed);
-    if (keys["ArrowDown"]) movePlayer(p2,0,speed);
-    if (keys["ArrowLeft"]) movePlayer(p2,-speed,0);
-    if (keys["ArrowRight"]) movePlayer(p2,speed,0);
-  } else {
-    botMove();
-  }
+  if(mode==="2p"){
+    if(keys["ArrowUp"]) movePlayer(p2,0,-speed);
+    if(keys["ArrowDown"]) movePlayer(p2,0,speed);
+    if(keys["ArrowLeft"]) movePlayer(p2,-speed,0);
+    if(keys["ArrowRight"]) movePlayer(p2,speed,0);
+  } else botMove();
 
-  ctx.fillStyle="gray";
-  walls.forEach(w => ctx.fillRect(w.x,w.y,w.w,w.h));
+  ctx.fillStyle="gray"; walls.forEach(w=>ctx.fillRect(w.x,w.y,w.w,w.h));
 
-  ctx.fillStyle=p1.c;
-  ctx.fillRect(p1.x,p1.y,20,20);
-  ctx.fillStyle=p2.c;
-  ctx.fillRect(p2.x,p2.y,20,20);
+  ctx.fillStyle=p1.c; ctx.fillRect(p1.x,p1.y,20,20);
+  ctx.fillStyle=p2.c; ctx.fillRect(p2.x,p2.y,20,20);
 
   checkTag();
   requestAnimationFrame(loop);
@@ -210,3 +157,5 @@ loop();
 
 </body>
 </html>
+
+
